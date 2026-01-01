@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Timer</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f2f4f7;
+    margin:0;
+    text-align:center;
+}
+.page{display:none;padding:30px}
+.active{display:block}
+.box{
+    background:#fff;
+    margin:20px auto;
+    max-width:360px;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.15)
+}
+.time{font-size:150px;margin:30px 0}
+.message{
+    font-size:50px;
+    color:#307030;
+    display:none;
+    margin:20px 0
+}
+button{
+    font-size:18px;
+    padding:12px 26px;
+    margin:8px
+}
+* {color:#005060}
+</style>
+</head>
+
+<body>
+
+<div id="home" class="page active">
+    <h1>⏳ Chọn chế độ học</h1>
+
+    <div class="box">
+        <h3>📘 Học hiểu sơ (30 phút)</h3>
+        <button onclick="buttonSound(); goTimer(2)">Bắt đầu</button>
+    </div>
+
+    <div class="box">
+        <h3>📗 Học hiểu sâu (90 phút)</h3>
+        <button onclick="buttonSound(); goTimer(5400)">Bắt đầu</button>
+    </div>
+
+    <div class="box">
+        <h3>🔥 Tryhard (180 phút)</h3>
+        <button onclick="buttonSound(); goTimer(10800)">Bắt đầu</button>
+    </div>
+</div>
+
+<div id="timerPage" class="page">
+    <div id="display" class="time">00:00</div>
+
+    <div id="success" class="message">
+        Làm tốt lắm!    </div>
+
+    <button onclick="buttonSound(); startTimer()">▶ Start</button>
+    <button onclick="buttonSound(); resetTimer()">⟳ Reset</button>
+    <br>
+    <button onclick="buttonSound(); goHome()">⬅ Quay lại</button>
+</div>
+
+<script>
+let totalTime=0;
+let remaining=0;
+let timer=null;
+let alarmInterval=null;
+
+/* ===== ÂM THANH BẤM NÚT ===== */
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+
+function buttonSound(){
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type="square";
+    osc.frequency.value=600;
+    gain.gain.setValueAtTime(0.12,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.07);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime+0.07);
+}
+
+/* ===== ÂM THANH BÁO ĐỘNG (BÍP BÍP BÍP) ===== */
+function alarmBeep(){
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type="square";
+    osc.frequency.value=900;
+    gain.gain.value=0.2;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime+0.15);
+}
+
+function startAlarm(){
+    stopAlarm();
+    alarmInterval=setInterval(alarmBeep,1000);
+}
+
+function stopAlarm(){
+    if(alarmInterval){
+        clearInterval(alarmInterval);
+        alarmInterval=null;
+    }
+}
+
+/* ===== TIMER ===== */
+function goTimer(sec){
+    totalTime=sec;
+    remaining=sec;
+    update();
+    document.getElementById("success").style.display="none";
+document.getElementById("home").classList.remove("active");
+    document.getElementById("timerPage").classList.add("active");
+}
+
+function startTimer(){
+    if(timer) return;
+    timer=setInterval(()=>{
+        remaining--;
+        update();
+        if(remaining<=0){
+            clearInterval(timer);
+            timer=null;
+            remaining=0;
+            update();
+            document.getElementById("success").style.display="block";
+            startAlarm();
+        }
+    },1000);
+}
+
+function resetTimer(){
+    clearInterval(timer);
+    timer=null;
+    remaining=totalTime;
+    update();
+    document.getElementById("success").style.display="none";
+    stopAlarm();
+}
+
+function goHome(){
+    clearInterval(timer);
+    timer=null;
+    stopAlarm();
+    document.getElementById("timerPage").classList.remove("active");
+    document.getElementById("home").classList.add("active");
+}
+
+function update(){
+    const m=Math.floor(remaining/60);
+    const s=remaining%60;
+    document.getElementById("display").innerText=
+        String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+</script>
+
+</body>
+</html>
